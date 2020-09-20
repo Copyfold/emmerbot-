@@ -1,5 +1,5 @@
 from os import environ
-from os.path import join, realpath
+from os.path import dirname, join, realpath
 from random import choice, choices, randint
 from string import whitespace
 from typing import Any, Dict, Iterator, List, Sequence, cast
@@ -10,7 +10,7 @@ from discord.ext import commands
 TOKEN = environ["token"]
 
 bot = commands.Bot(command_prefix="!")
-TRAINING = join(realpath(__file__), "training.txt")
+TRAINING = join(dirname(realpath(__file__)), "training.txt")
 
 M_LO, M_HI = 10, 20
 
