@@ -1,0 +1,9 @@
+version: "3.7"
+
+services:
+  #
+  # This file is used for development
+  #
+  discord:
+    build: .
+    container_name: discord
