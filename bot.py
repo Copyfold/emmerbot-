@@ -1,8 +1,8 @@
-import random
-import re
-from collections import defaultdict
 from os import environ
-from typing import Any, Dict, List, Optional
+from os.path import join, realpath
+from random import choice, choices, randint
+from string import whitespace
+from typing import Any, Dict, Iterator, List, Sequence, cast
 
 import discord
 from discord.ext import commands
@@ -10,55 +10,47 @@ from discord.ext import commands
 TOKEN = environ["token"]
 
 bot = commands.Bot(command_prefix="!")
+TRAINING = join(realpath(__file__), "training.txt")
+
+M_LO, M_HI = 10, 20
+
+WS = {*whitespace}
+store: Dict[str, Dict[str, int]] = {}
 
 
-class LString:
-    def __init__(self) -> None:
-        self._total = 0
-        self._successors: Dict[str, int] = defaultdict(int)
-
-    def put(self, word: str) -> None:
-        self._successors[word] += 1
-        self._total += 1
-
-    def get_random(self) -> Optional[str]:
-        ran = random.randint(0, self._total - 1)
-        for key, value in self._successors.items():
-            if ran < value:
-                return key
-            else:
-                ran -= value
-        return None
+def load(src: str) -> Iterator[str]:
+    acc: List[str] = []
+    with open(src) as fd:
+        for line in fd:
+            for char in line:
+                if char not in WS:
+                    acc.append(char)
+                else:
+                    if acc:
+                        yield "".join(acc)
+                        acc.clear()
 
 
-couple_words: Dict[Any, Any] = defaultdict(LString)
-
-
-def load(phrases: str) -> None:
-    with open(phrases, "r") as f:
-        for line in f:
-            add_message(line)
-
-
-def add_message(message: str) -> None:
-    message = re.sub(r"[^\w\s\']", "", message).lower().strip()
-    words = message.split()
-    for i in range(2, len(words)):
-        couple_words[(words[i - 2], words[i - 1])].put(words[i])
-    couple_words[(words[-2], words[-1])].put("")
+def populate(it: Iterator[str]) -> None:
+    prev: str = ""
+    for word in it:
+        sub_store = store.setdefault(prev, {})
+        sub_store[word] = sub_store.get(word, 0) + 1
+        prev = word
 
 
 def generate() -> str:
-    result: List[Any] = []
-    while len(result) < 10 or len(result) > 20:
-        result = []
-        s = random.choice(list(couple_words.keys()))
-        result.extend(s)
-        while result[-1]:
-            w = couple_words[(result[-2], result[-1])].get_random()
-            result.append(w)
+    acc: List[str] = []
+    acc.append(choice(tuple(store)))
+    for _ in range(0, randint(M_LO, M_HI)):
+        candidates = store[acc[-1]]
+        pop, weights = zip(*candidates.items())
+        nxt, *_ = choices(
+            cast(Sequence[str], pop), weights=cast(Sequence[int], weights)
+        )
+        acc.append(nxt)
 
-    return " ".join(result)
+    return " ".join(acc)
 
 
 @bot.event
@@ -84,7 +76,7 @@ async def on_message(message: Any) -> None:
         return
 
     if message.content.startswith("hello"):
-        response = random.choice(
+        response = choice(
             [
                 "Hello " + str(message.author) + "!",
                 "Henlo!",
@@ -122,6 +114,8 @@ async def on_message(message: Any) -> None:
     await bot.process_commands(message)
 
 
-load("training.txt")
+it = load(TRAINING)
+populate(it)
+
 
 bot.run(TOKEN)
