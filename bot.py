@@ -89,7 +89,7 @@ async def on_message(message: Any) -> None:
     elif message.content.startswith("!flip"):
         response = choice(
             [
-                "Heads",
+                "Heads!",
                 "Tails!"
             ]
         )
