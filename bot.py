@@ -70,7 +70,7 @@ async def on_message(message: Any) -> None:
         f"{message.channel}: {message.author}: {message.author.name}: {message.content}"
     )
 
-    if message.content.startswith("!markov"):
+    if message.content.startswith("!bee"):
         resp = generate()
         await channel.send(resp)
         return
