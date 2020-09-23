@@ -93,6 +93,8 @@ async def on_message(message: Any) -> None:
                 "Tails!"
             ]
         )
+        await channel.send(response)
+        
     elif message.content.startswith("i love you"):
         await channel.send("i love you too " + str(message.author) + "!")
 
